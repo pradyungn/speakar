@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "450099725313",
+    "firebase_url": "https://speakar-75f76.firebaseio.com",
+    "project_id": "speakar-75f76",
+    "storage_bucket": "speakar-75f76.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:450099725313:android:ac3cbf4fb2bd9b2d",
+        "android_client_info": {
+          "package_name": "com.penguinbros.speakar"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "450099725313-0dc4tifd0esfjisba53046351rnb1uan.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCgDyNA0dzIua4wdksppX8jSQoMdH6O23I"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
