@@ -1,11 +1,23 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.penguinbros.speakar">
 
+    <!-- "AR Required" apps must declare minSdkVersion ≥ 24 -->
+    <uses-sdk android:minSdkVersion="24" />
+
     <!-- The INTERNET permission is required for development. Specifically,
          flutter needs it to communicate with the running application
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- Both "AR Optional" and "AR Required" apps require CAMERA permission. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- Indicates that app requires ARCore ("AR Required"). Ensures app is only
+     visible in the Google Play Store on devices that support ARCore.
+     For "AR Optional" apps remove this line. -->
+    <uses-feature android:name="android.hardware.camera.ar" />
+
 
     <!-- io.flutter.app.FlutterApplication is an android.app.Application that
          calls FlutterMain.startInitialization(this); in its onCreate method.
@@ -35,5 +47,10 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+
+        <!-- Indicates that app requires ARCore ("AR Required"). Causes Google
+         Play Store to download and install ARCore along with the app.
+         For an "AR Optional" app, specify "optional" instead of "required". -->
+        <meta-data android:name="com.google.ar.core" android:value="required" />
     </application>
 </manifest>
