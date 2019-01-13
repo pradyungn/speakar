@@ -1,38 +1,27 @@
-
 import 'dart:async';
-import 'package:flutter/material.dart';
-import 'image_labeler.dart';
-import 'package:flutter/services.dart';
+import 'dart:io';
+
 import 'package:camera/camera.dart';
+import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:firebase_ml_vision/firebase_ml_vision.dart';
 
-
-List<CameraDescription> cameras;
-
-Future<void> main() async {
-  // Fetch the available cameras before initializing the app.
-  try {
-    cameras = await availableCameras();
-  } on CameraException catch (e) {
-    logError(e.code, e.description);
+class FlutterVisionHome extends StatefulWidget {
+  @override
+  _FlutterVisionHomeState createState() {
+    return _FlutterVisionHomeState();
   }
-  runApp(new MaterialApp(
-    home: CameraApp(),
-  ));
 }
 
 void logError(String code, String message) =>
-  print('Error: $code\nError Message: $message');
+    print('Error: $code\nError Message: $message');
 
-class CameraApp extends StatefulWidget {
-  @override
-  _CameraAppState createState() => new _CameraAppState();
-}
-
-class _CameraAppState extends State<CameraApp> {
+class _FlutterVisionHomeState extends State<FlutterVisionHome> {
   CameraController controller;
-  static const channel = const MethodChannel('channel.ar');
-  final ImageLabeler reader = ImageLabeler.instance;
-  
+  String imagePath;
+
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   @override
   void initState() {
     super.initState();
@@ -43,31 +32,39 @@ class _CameraAppState extends State<CameraApp> {
       }
       setState(() {});
     });
-    reader.addListener(() {
-      setState(() {});
-    });
-    reader.init();
   }
-  
+
   @override
   void dispose() {
     controller?.dispose();
-    reader.dispose();
     super.dispose();
   }
-  
-//  String _imageLabel() {
-//
-// }
-// Just in case.
-  
-  Future<Null> _sendData() async {
-    final response =
-      await channel.invokeMethod("receiveData", reader.value);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      key: _scaffoldKey,
+      appBar: AppBar(
+        title: const Text('Flutter Vision'),
+      ),
+      body: Column(
+        children: <Widget>[
+          Expanded(
+            child: Container(
+              child: Padding(
+                padding: const EdgeInsets.all(1.0),
+                child: Center(
+                  child: _cameraPreviewWidget(),
+                ),
+              ),
+            ),
+          ),
+          _captureControlRowWidget(),
+        ],
+      ),
+    );
   }
-  
-  
-  
+
   /// Display the preview from the camera (or a message if the preview is not available).
   Widget _cameraPreviewWidget() {
     if (controller == null || !controller.value.isInitialized) {
@@ -86,29 +83,109 @@ class _CameraAppState extends State<CameraApp> {
       );
     }
   }
-  
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'SpeakAR'
-        ),
-      ),
-      body: Column(
-        children: <Widget>[
-          Expanded(
-            child: Container(
-              child: Padding(
-                padding: const EdgeInsets.all(1.0),
-                child: Center(
-                  child: _cameraPreviewWidget(),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+
+  /// Display the control bar with buttons to take pictures.
+  Widget _captureControlRowWidget() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      mainAxisSize: MainAxisSize.max,
+      children: <Widget>[
+        IconButton(
+          icon: const Icon(Icons.camera_alt),
+          color: Colors.blue,
+          onPressed: controller != null &&
+              controller.value.isInitialized
+              ? onTakePictureButtonPressed
+              : null,
+        )
+      ],
     );
   }
+
+  String timestamp() => DateTime.now().millisecondsSinceEpoch.toString();
+
+  void showInSnackBar(String message) {
+    _scaffoldKey.currentState.showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  void onTakePictureButtonPressed() {
+    takePicture().then((String filePath) {
+      if (mounted) {
+        setState(() {
+          imagePath = filePath;
+        });
+        if (filePath != null) {
+          showInSnackBar('Picture saved to $filePath');
+
+          detectLabels().then((_) {
+
+          });
+        }
+      }
+    });
+  }
+
+  Future<void> detectLabels() async {
+    final FirebaseVisionImage visionImage = FirebaseVisionImage.fromFilePath(imagePath);
+    final LabelDetector labelDetector = FirebaseVision.instance.labelDetector();
+    final List<Label> labels = await labelDetector.detectInImage(visionImage);
+
+    for (Label label in labels) {
+      final String text = label.label;
+      //final String entityId = label.entityId;
+      //final double confidence = label.confidence;
+
+      _scaffoldKey.currentState.showSnackBar(SnackBar(content: Text(text)));
+    }
+  }
+
+  Future<String> takePicture() async {
+    if (!controller.value.isInitialized) {
+      showInSnackBar('Error: select a camera first.');
+      return null;
+    }
+    final Directory extDir = await getApplicationDocumentsDirectory();
+    final String dirPath = '${extDir.path}/Pictures/flutter_vision';
+    await Directory(dirPath).create(recursive: true);
+    final String filePath = '$dirPath/${timestamp()}.jpg';
+
+    if (controller.value.isTakingPicture) {
+      // A capture is already pending, do nothing.
+      return null;
+    }
+
+    try {
+      await controller.takePicture(filePath);
+    } on CameraException catch (e) {
+      _showCameraException(e);
+      return null;
+    }
+    return filePath;
+  }
+
+  void _showCameraException(CameraException e) {
+    logError(e.code, e.description);
+    showInSnackBar('Error: ${e.code}\n${e.description}');
+  }
+}
+
+class FlutterVisionApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: FlutterVisionHome(),
+    );
+  }
+}
+
+List<CameraDescription> cameras;
+
+Future<void> main() async {
+  // Fetch the available cameras before initializing the app.
+  try {
+    cameras = await availableCameras();
+  } on CameraException catch (e) {
+    logError(e.code, e.description);
+  }
+  runApp(FlutterVisionApp());
 }
