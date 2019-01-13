@@ -22,6 +22,7 @@ if (flutterVersionName == null) {
 }
 
 apply plugin: 'com.android.application'
+apply plugin: 'com.google.gms.google-services'
 apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
 android {
@@ -41,12 +42,6 @@ android {
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
 
-    compileOptions {
-        sourceCompatibility 1.8
-        targetCompatibility 1.8
-    }
-
-
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.
@@ -65,20 +60,6 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     implementation 'com.google.firebase:firebase-core:16.0.6'
-    // Provides Firebase resources
-    implementation 'com.google.firebase:firebase-core:16.0.1'
-    implementation 'com.google.firebase:firebase-ml-vision:18.0.2'
-    implementation 'com.google.firebase:firebase-ml-vision-image-label-model:17.0.2'
-    // Provides ARCore Session and related resources.
     implementation 'com.google.ar:core:1.6.0'
 
-    // Provides ArFragment, and other UX resources.
-    implementation 'com.google.ar.sceneform.ux:sceneform-ux:1.6.0'
-
-    // Alternatively, use ArSceneView without the UX dependency.
-    implementation 'com.google.ar.sceneform:core:1.6.0'
-
 }
-
-
-apply plugin: 'com.google.gms.google-services'
